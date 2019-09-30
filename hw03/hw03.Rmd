@@ -7,8 +7,11 @@ author: "Kaitlin Sullivan (kaitsull)"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+suppressMessages(library(dplyr))
 library(ggplot2)
 library(gapminder)
+library(knitr)
+library(DT)
 ```
 
 ## Task Option #1
@@ -16,13 +19,15 @@ Abundance of countries with low life expectancy over time by continent.
 (I considered any life expectancy below 55 years as a low life expectancy.)
 
 ```{r}
-
-gapminder %>% 
+lowLife <- gapminder %>% 
   filter(lifeExp < 55) %>%
   group_by(year, continent) %>% 
   count(continent) %>% 
-  select(year, n) %>% 
-  ggplot(aes(x = year, y = n)) +
+  select(year, n)
+
+DT::datatable(lowLife)
+
+ggplot(lowLife, aes(x = year, y = n)) +
   geom_histogram(stat = "identity") +
   facet_wrap(~ continent) +
   labs(
@@ -39,12 +44,16 @@ Maximum and minimum GDP per capita in each of the continents.
 
 ```{r}
 
-gapminder %>% 
-  group_by(year, continent) %>%
-  arrange(year, continent) %>% 
-  mutate(maximum = max(gdpPercap), minimum = min(gdpPercap)) %>% 
-  filter(gdpPercap == maximum | gdpPercap == minimum) %>% 
-  ggplot(aes(year, gdpPercap, colour = continent)) +
+gdpCont <- gapminder %>% 
+            group_by(year, continent) %>%
+            arrange(year, continent) %>% 
+            mutate(maximum = max(gdpPercap), minimum = min(gdpPercap)) %>% 
+            filter(gdpPercap == maximum | gdpPercap == minimum) %>% 
+            select(year, continent, gdpPercap)
+
+DT::datatable(gdpCont)
+  
+ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
   geom_point() +
   facet_wrap(~ continent) +
   labs(
@@ -58,6 +67,10 @@ gapminder %>%
 How is life expectancy changing over time in each continent?
 
 ```{r}
+DT::datatable(gapminder %>% 
+                select(continent, country, year, lifeExp) %>% 
+                arrange(year, continent))
+
 gapminder %>% 
   ggplot(aes(x = year, y = lifeExp, colour = continent, group = country)) +
   geom_line(alpha = 0.3) +
