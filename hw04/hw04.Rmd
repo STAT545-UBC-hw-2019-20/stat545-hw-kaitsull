@@ -1,0 +1,135 @@
+---
+title: "hw04 - Tidy Data & Joins"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gapminder)
+library(tidyverse)
+library(ggplot2)
+library(DT)
+library(knitr)
+```
+
+## Exercise 1
+### Univariate Option 1:
+1. Make a tibble with one row per year, and columns for life expectancy for two or more countries.
+
+```{r}
+#Life expectancy in Iran and Japan for each year in gapminder
+gap_wide <- gapminder %>% 
+  filter(country == "Iran" | country == "Japan") %>% 
+  pivot_wider(id_cols = year, 
+              names_from = country, 
+              values_from = lifeExp)
+DT::datatable(gap_wide)
+```
+
+
+2. Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.
+
+```{r}
+
+#Scatterplot of life expectancy in Iran vs Japan
+
+gap_wide %>% 
+  ggplot(aes(x = Iran, y = Japan, colour = year)) +
+           geom_point() +
+           labs(
+             title = "Life Expectancy of Iran vs Japan",
+             x = "Life Expectancy in Iran",
+             y = "Life Expectancy in Japan"
+           )
+
+```
+
+
+3. Re-lengthen the data.
+
+
+```{r}
+
+#re-lengthen data
+gap_wide %>% 
+  pivot_longer(cols = c(-year),
+               names_to = 'country',
+               values_to = 'lifeExp') %>% 
+  DT::datatable()
+
+```
+
+## Exercise 2
+### Multivariate Option 1:
+
+1. Make a tibble with one row per year, and columns for life expectancy and GDP per capita (or two other numeric variables) for two or more countries.
+
+```{r}
+
+#widen data
+
+newgap_wide <- gapminder %>% 
+  filter(country == "Cambodia" | country == "Rwanda") %>% 
+  pivot_wider(id_cols     = year, 
+              names_from  = country, 
+              names_sep   = " ", 
+              values_from = c(lifeExp, gdpPercap))
+
+DT::datatable(newgap_wide)
+
+```
+
+
+2. Re-lengthen the data.
+
+```{r}
+#re-lengthen data
+
+newgap_wide %>% 
+  pivot_longer(cols = c(-year),
+               names_to = c(".value", 'country'),
+               names_sep = " ") %>% 
+  DT::datatable(newgap_wide)
+
+```
+
+## Exercise 3
+
+```{r}
+guest <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/attend.csv")
+guest
+
+email <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/emails.csv")
+email
+```
+
+
+### 3.1
+For each guest in the guestlist (`guest` tibble), add a column for email address, which can be found in the `email` tibble.
+
+```{r}
+
+#lengthen listed guest names and change column name to match 'guest' dataframe
+email <- email %>%
+  rename(name = guest) %>%
+  separate_rows(name, sep = ", ")
+
+#join data tables
+guest  %>%
+  left_join(email, by = "name") %>%
+
+DT::datatable(guest)
+  
+```
+
+### 3.2
+Who do we have emails for, yet are not on the guestlist?
+
+```{r}
+#datatable with values excluded in 'guest'
+email %>% 
+  anti_join(guest, by = "name") %>% 
+  knitr::kable()
+```
+
+
