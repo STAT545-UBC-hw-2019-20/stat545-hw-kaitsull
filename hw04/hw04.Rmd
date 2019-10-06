@@ -133,3 +133,13 @@ email %>%
 ```
 
 
+### 3.3
+Make a guestlist that includes everyone we have emails for (in addition to those on the original guestlist).
+
+```{r}
+#include all individuals from the email datatable in the guest datatable
+guest %>% 
+  full_join(email) %>% 
+  DT::datatable()
+```
+
