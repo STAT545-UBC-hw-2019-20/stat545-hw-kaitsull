@@ -1,3 +1,3 @@
-#hw04 - HTML file
+# hw04 - HTML file
 
-Click (here) [STAT545-UBC-hw-2019-20/stat545-hw-kaitsull] for hw04 HTML file page.
+Click (here) [github.io/stat545-hw-kaitsull/hw04/hw04.html] for hw04 HTML file page.
