@@ -97,10 +97,7 @@ newgap_wide %>%
 
 ```{r}
 guest <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/attend.csv")
-guest
-
 email <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/emails.csv")
-email
 ```
 
 
