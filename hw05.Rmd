@@ -1,0 +1,213 @@
+---
+title: "hw05"
+output: html_document
+toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gapminder)
+library(tidyverse)
+library(here)
+library(knitr)
+library(DT)
+library(ggplot2)
+```
+
+## Exercise 1: Explain the value of the `here::here` package
+
+The `here::here` package is incredibly useful for writing to and from files. It allows the user to create platform-independent, relative file paths for one's data, similar to base R's `file.path` - *__but__ with an added bonus!*. It allows for easy reading and writing of both data and figures to a root directory or to a _subdirectories within the root directory_, thus circumventing the limitations imposed by the classic local working directory in R. Overall, this package is very helpful in aiding one's own coding process as well as providing a more reliable output for collaboration and reproducability. 
+
+## Exercise 2: Factor Management
+
+### Elaboration for the gapminder data set
+__Drop Oceania.__ Filter the Gapminder data to remove observations associated with the `continent` of Oceania. Additionally, remove unused factor levels. Provide concrete information on the data before and after removing these rows and Oceania; address the number of rows and the levels of the affected factors.
+
+
+#### Concrete information on the data before removal:
+gapminder has 5 levels (one of which being __Oceania__) and 1704 rows.
+```{r}
+#does continent contain factors?  
+class(gapminder$continent)
+
+#what are the levels associated with these factors?
+nlevels(gapminder$continent)
+
+#what are these levels called?
+levels(gapminder$continent)
+
+#how many rows are of these factors are there?
+nrow(gapminder)
+```
+
+#### Removal of `Oceania` leaves us with 4 levels and 
+```{r}
+#remove all instances of Oceania from gapminder
+dropGap <- gapminder %>%
+  filter(continent != 'Oceania') %>% 
+  droplevels()
+
+#gapminder after dropping Oceania
+DT::datatable(dropGap)
+
+#number of levels after dropping Oceania?
+nlevels(dropGap$continent)
+
+#number of rows after dropping Oceania?
+nrow(dropGap)
+```
+
+
+__Reorder the levels of `country` or `continent`.__ Use the forcats package to change the order of the factor levels, based on summarized information of one of the quantitative variables. Consider experimenting with a summary statistic beyond the most basic choice of the mean/median. Use the `forcats` package in the tidyverse for this, rather than the baseR function `as.factor`.
+
+
+I will be looking at the minimum life expectancy across each of the continents.
+
+I chose this data to plot because it shows very interesting troughs in Asia for 1977 and Africa in 1992. 
+
+These dramatic drops in life expectancy reflect the horrible genocides that occurred in Cambodia and Rwanda respectively during these years in history. 
+
+```{r}
+#creation of a new tibble containing the minimum life expectancy in each continent, each year
+minLifeGap <- gapminder %>% 
+  group_by(continent, year) %>% 
+  mutate(minLife = min(lifeExp)) %>% 
+  filter(lifeExp == minLife) %>% 
+  arrange(year, continent)
+
+DT::datatable(minLifeGap)
+
+```
+
+We can change the order of factors to optomize our legend and colour schema using `fct_reorder2()`
+```{r}
+#plot this tibble as is:
+minLifeGap %>% 
+  ggplot(aes(x = year, y = minLife, colour = continent)) +
+    geom_line() +
+    labs(x = "Year",
+         y = "Minimum Life Expectancy",
+         title = "Minimum Life Expectancy in Each Continent from 1952-2007",
+         subtitle = "Before factor reordering!")
+
+#plot re-ordered tibble:
+minLifeGap %>% 
+  ggplot(aes(x = year, y = minLife, 
+             colour = fct_reorder2(continent, year, minLife))) +
+    geom_line()
+
+```
+
+
+We can reorder factors in a scatterplot using `fct_reorder()`
+
+For this plot I used data  only from the years *1952* and *2007*.
+
+```{r}
+#create new tibble with only 1952 and 2007
+minLifeGap_new <- minLifeGap %>% 
+  filter(year == 1952 | year == 2007) %>% 
+  arrange(continent)
+
+#before re-ordering
+minLifeGap_new %>% 
+  ggplot(aes(x = minLife, y = continent, colour = year)) +
+    geom_point() +
+    geom_text(aes(label = country), hjust=0, vjust=-1)
+
+#after re-ordering
+minLifeGap_new %>% 
+  ggplot(aes(x = minLife, y = fct_reorder(continent, minLife),
+             colour = year)) +
+    geom_point()+
+    geom_text(aes(label = country), hjust=0, vjust=-1)
+
+```
+
+
+## Exercise 3: File input/output (I/O)
+
+__Task:__ Create something new, export to disk and then reload it. You should use here::here() for reading in and writing out.
+
+__1. CREATE SOMETHING NEW__
+I will create a version of gapminder containing only the five countries: *Canada, Hungary, Iran, Japan, and Ireland*, their populations, and GDP percapita.
+```{r}
+#create new gapminder
+gap5 <- gapminder %>% 
+  filter(country == 'Canada' | country == 'Hungary' | country == 'Iran' |
+           country == 'Japan' | country == 'Ireland') %>% 
+  select(country, year, gdpPercap, pop) %>% 
+  arrange(country, year, pop, gdpPercap)
+
+DT::datatable(gap5)
+```
+__1. Write to disk and then read back__
+```{r}
+#write
+write_csv(gap5,here::here("myGapminder.csv"))
+
+#read
+read_csv(here::here("myGapminder.csv")) %>% 
+  DT::datatable()
+```
+
+## Exercise 4: Visualization design
+
+__Task:__ Recreate at least one figure in light of something you learned in the recent class meetings about visualization design and color.
+
+Create a side-by-side plot and juxtapose your first attempt (show the original figure as-is) with a revised attempt after some time spent working on it and implementing principles of effective plotting principles. Comment and reflect on the differences.
+
+
+##### I chose a figure that I made from hw03 task option #2
+Here is the original figure looking at the maximum and minimum GDP percapita in each of the continents over all of the years in gapminder.
+```{r}
+gdpCont <- gapminder %>% 
+            group_by(year, continent) %>%
+            arrange(year, continent) %>% 
+            mutate(maximum = max(gdpPercap), minimum = min(gdpPercap)) %>% 
+            filter(gdpPercap == maximum | gdpPercap == minimum) %>% 
+            select(year, continent, gdpPercap)
+  
+ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
+  geom_point() +
+  facet_wrap(~ continent) +
+  labs(
+    title = "Maximum and Minimum GDP per capita in each continent over the years"
+  )
+```
+
+And a cleaned up version
+```{r}
+gdpCont <- gapminder %>% 
+            group_by(year, continent) %>%
+            arrange(year, continent) %>% 
+            mutate(maximum = max(gdpPercap), minimum = min(gdpPercap)) %>% 
+            filter(gdpPercap == maximum | gdpPercap == minimum) %>% 
+            select(year, continent, gdpPercap)
+  
+ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
+  geom_point() +
+  facet_wrap(~ continent, nrow = 1) +
+  labs(
+    x = "year",
+    y = "GDP per capita",
+    title = "Max and Min GDP per capita in each continent",
+    subtitle = "From 1952-2007"
+  )+
+  theme_classic()+
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 45,
+                                   hjust = 1,
+                                   vjust = 1))
+```
+
+## Exercise 5: Writing figures to file
+
+__Task:__ Use `ggsave()` to explicitly save a plot to file. Include the exported plot as part of your repository and assignment.
+
+Then, use `![Alt text](/path/to/img.png)` to load and embed that file into your report.
+
+```{r}
+
+```
+
