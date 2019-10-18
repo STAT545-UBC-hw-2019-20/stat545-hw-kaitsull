@@ -219,6 +219,6 @@ Then, use `![Alt text](/path/to/img.png)` to load and embed that file into your 
 #save previous plot
 ggsave(here::here("myNewPlot.png"), plot = myNewPlot)
 
-#![hello](here::here("myNewPlot.png"))
-```
 
+```
+#![Here is the plot!](myNewPlot.png))
