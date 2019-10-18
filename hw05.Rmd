@@ -94,7 +94,12 @@ minLifeGap %>%
 minLifeGap %>% 
   ggplot(aes(x = year, y = minLife, 
              colour = fct_reorder2(continent, year, minLife))) +
-    geom_line()
+    geom_line()+
+  labs(x = "Year",
+         y = "Minimum Life Expectancy",
+         title = "Minimum Life Expectancy in Each Continent from 1952-2007",
+         subtitle = "After factor reordering!") +
+  theme(legend.title = element_blank())
 
 ```
 
@@ -120,7 +125,13 @@ minLifeGap_new %>%
   ggplot(aes(x = minLife, y = fct_reorder(continent, minLife),
              colour = year)) +
     geom_point()+
-    geom_text(aes(label = country), hjust=0, vjust=-1)
+    geom_text(aes(label = country), hjust=0, vjust=-1)+
+  labs(
+    x = "Minimum Life Expectancy",
+    y = "Continent",
+    title = "Minimum Life Expectancy Across the Continents",
+    subtitle = "From 1952 and 1957"
+  )
 
 ```
 
@@ -161,35 +172,31 @@ Create a side-by-side plot and juxtapose your first attempt (show the original f
 ##### I chose a figure that I made from hw03 task option #2
 Here is the original figure looking at the maximum and minimum GDP percapita in each of the continents over all of the years in gapminder.
 ```{r}
+#tibble data for old plot
 gdpCont <- gapminder %>% 
             group_by(year, continent) %>%
             arrange(year, continent) %>% 
             mutate(maximum = max(gdpPercap), minimum = min(gdpPercap)) %>% 
             filter(gdpPercap == maximum | gdpPercap == minimum) %>% 
             select(year, continent, gdpPercap)
-  
-ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
+#original plot  
+myOldPlot<- ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
   geom_point() +
   facet_wrap(~ continent) +
   labs(
     title = "Maximum and Minimum GDP per capita in each continent over the years"
   )
-```
+myOldPlot
 
-And a cleaned up version
+```
+New cleaned up version :)
 ```{r}
-gdpCont <- gapminder %>% 
-            group_by(year, continent) %>%
-            arrange(year, continent) %>% 
-            mutate(maximum = max(gdpPercap), minimum = min(gdpPercap)) %>% 
-            filter(gdpPercap == maximum | gdpPercap == minimum) %>% 
-            select(year, continent, gdpPercap)
-  
-ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
+#new clean plot
+myNewPlot <- ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
   geom_point() +
   facet_wrap(~ continent, nrow = 1) +
   labs(
-    x = "year",
+    x = "Year",
     y = "GDP per capita",
     title = "Max and Min GDP per capita in each continent",
     subtitle = "From 1952-2007"
@@ -199,6 +206,7 @@ ggplot(gdpCont, aes(year, gdpPercap, colour = continent)) +
         axis.text.x = element_text(angle = 45,
                                    hjust = 1,
                                    vjust = 1))
+myNewPlot
 ```
 
 ## Exercise 5: Writing figures to file
@@ -208,6 +216,9 @@ __Task:__ Use `ggsave()` to explicitly save a plot to file. Include the exported
 Then, use `![Alt text](/path/to/img.png)` to load and embed that file into your report.
 
 ```{r}
+#save previous plot
+ggsave(here::here("myNewPlot.png"), plot = myNewPlot)
 
+#![hello](here::here("myNewPlot.png"))
 ```
 
